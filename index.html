@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>K865 War Room</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial; background:#111; color:#eee; }
+    table { width:100%; border-collapse: collapse; }
+    td, th { border:1px solid #444; padding:8px; }
+    input, select { width:100%; }
+    .admin { background:#222; padding:10px; margin-bottom:10px; }
+  </style>
+</head>
+<body>
+
+<h1>K865 War Room System</h1>
+
+<div class="admin">
+  <button onclick="login()">Admin Login</button>
+</div>
+
+<table id="dataTable">
+  <thead>
+    <tr>
+      <th>Player Name</th>
+      <th>Alliance</th>
+      <th>Power</th>
+      <th>Training Days</th>
+      <th>Research Days</th>
+      <th>Building Days</th>
+      <th>Final Decision</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<button onclick="addRow()">Add Player</button>
+<button onclick="saveData()">Save</button>
+
+<script>
+const SUPABASE_URL = "YOUR_URL";
+const SUPABASE_KEY = "YOUR_KEY";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let isAdmin = false;
+
+function login(){
+  const pass = prompt("Enter admin password");
+  if(pass === "K865warroom"){
+    isAdmin = true;
+    alert("Admin access granted");
+    render();
+  }
+}
+
+function addRow(data = {}){
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td><input value="${data.name || ''}"></td>
+    <td><input value="${data.alliance || ''}"></td>
+    <td><input value="${data.power || ''}"></td>
+    <td><input value="${data.train || ''}"></td>
+    <td><input value="${data.research || ''}"></td>
+    <td><input value="${data.build || ''}"></td>
+    <td>
+      <select ${isAdmin ? '' : 'disabled'}>
+        <option>Pending</option>
+        <option>Approved</option>
+        <option>Rejected</option>
+      </select>
+    </td>
+  `;
+
+  document.getElementById("tableBody").appendChild(row);
+}
+
+async function saveData(){
+  const rows = document.querySelectorAll("#tableBody tr");
+  let data = [];
+
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll("input, select");
+    data.push({
+      name: inputs[0].value,
+      alliance: inputs[1].value,
+      power: inputs[2].value,
+      train: inputs[3].value,
+      research: inputs[4].value,
+      build: inputs[5].value,
+      decision: inputs[6].value
+    });
+  });
+
+  await supabase.from('kvk_requests').insert(data);
+  alert("Saved");
+}
+
+async function loadData(){
+  let { data } = await supabase.from('kvk_requests').select('*');
+  data.forEach(d => addRow(d));
+}
+
+function render(){
+  document.getElementById("tableBody").innerHTML = "";
+  loadData();
+}
+
+render();
+</script>
+
+</body>
+</html>
